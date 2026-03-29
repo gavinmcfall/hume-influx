@@ -1,0 +1,11 @@
+.git
+.github
+.claude
+.dockerignore
+*.md
+config.toml
+config.toml.template
+kubernetes/
+__pycache__
+*.pyc
+.pytest_cache

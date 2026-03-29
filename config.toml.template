@@ -1,0 +1,16 @@
+# hume-influx configuration
+
+[[users]]
+name = "Gavin"
+email = "user@example.com"
+password = "password"
+
+[influx]
+url = "http://influxdb.vitals.svc.cluster.local:8086"
+bucket = "health"
+org = "vitals"
+token = "influxdb-token"
+
+[main]
+log_level = "INFO"
+loop_minutes = 60
