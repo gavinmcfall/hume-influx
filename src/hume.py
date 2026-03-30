@@ -7,8 +7,9 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-FIREBASE_API_KEY = "RUNTIME_FETCHED"
 FIREBASE_PROJECT = "myhealth-production"
+# API key fetched at runtime from Firebase hosting config
+_cached_api_key: str = ""
 FIRESTORE_BASE = f"https://firestore.googleapis.com/v1/projects/{FIREBASE_PROJECT}/databases/(default)/documents"
 
 
@@ -22,10 +23,25 @@ class HumeClient:
         self._refresh_token: str = ""
         self._uid: str = ""
 
+    @staticmethod
+    def _get_api_key() -> str:
+        """Fetch the public Firebase API key from the hosting config."""
+        global _cached_api_key
+        if _cached_api_key:
+            return _cached_api_key
+        resp = requests.get(
+            f"https://{FIREBASE_PROJECT}.firebaseapp.com/__/firebase/init.json",
+            timeout=10,
+        )
+        resp.raise_for_status()
+        _cached_api_key = resp.json()["apiKey"]
+        return _cached_api_key
+
     def login(self) -> bool:
         try:
+            api_key = self._get_api_key()
             resp = requests.post(
-                f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={FIREBASE_API_KEY}",
+                f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={api_key}",
                 json={"email": self._email, "password": self._password, "returnSecureToken": True},
                 timeout=15,
             )
@@ -48,8 +64,9 @@ class HumeClient:
         if not self._refresh_token:
             return self.login()
         try:
+            api_key = self._get_api_key()
             resp = requests.post(
-                f"https://securetoken.googleapis.com/v1/token?key={FIREBASE_API_KEY}",
+                f"https://securetoken.googleapis.com/v1/token?key={api_key}",
                 json={"grant_type": "refresh_token", "refresh_token": self._refresh_token},
                 timeout=15,
             )
